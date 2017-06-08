@@ -98,7 +98,7 @@ def get_point_from(infile, point):
 
     x = point[0]
     y = point[1]
-    area = infile.read(1, window=((x, y), (x, y)))
+    area = infile.read(1, window=((x, x + 1), (y, y + 1)))
 
     # why does infile.read sometimes return an empty area?
     if len(area.shape) == 0 or area.shape[0] == 0 or area.shape[1] == 0:
