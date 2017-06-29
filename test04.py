@@ -10,6 +10,10 @@ import random
 from affine import Affine
 from pyproj import Proj, transform
 
+# Used to print an example and kept for historic reasons.
+
+
+
 #
 # Assumes that the geotiff file has been resized in a way, that every pixel is a vertex "on the moon"
 #
