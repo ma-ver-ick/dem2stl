@@ -26,7 +26,7 @@ from pyproj import Proj, transform
 
 # https://astrogeology.usgs.gov/search/map/Moon/LRO/LOLA/Lunar_LRO_LOLA_Global_LDEM_118m_Mar2014#open
 # https://astrogeology.usgs.gov/search/map/Moon/LRO/LOLA/Lunar_LRO_LOLA_Global_LDEM_118m_Mar2014
-GEOTIFF = '/Users/msei/Downloads/lunar_large.tiff'
+GEOTIFF = 'lunar_large.tiff'
 # MOON_RADIUS = 1737400
 # MAX_MOON_RADIUS = 1745085
 # GEOTIFF_SCALE = 0.5
