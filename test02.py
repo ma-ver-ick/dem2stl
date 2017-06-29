@@ -28,7 +28,7 @@ GEOTIFF_SCALE = 0.5
 class test02:
     infile = None
     outfile = None
-    step_size = (10, 10)  # longitude, latitude
+    step_size = (1, 1)  # longitude, latitude
     srcProj = None
     destProj = None
     last_range_window = None
@@ -36,7 +36,7 @@ class test02:
     last_range_window_size = (20000, 20000)
     t0 = None
     t0_inv = None
-    moon_radius = 1737400  # meters
+    moon_radius = 150  #737400  # meters
     moon_radius_scale = 5  # half the values from the input file
 
     def __init__(self, infile, outfile):
@@ -66,22 +66,22 @@ class test02:
         return w[0][0] <= point[0] < w[0][1] and w[1][0] <= point[1] < w[1][1]
 
     def radius_for(self, sphere):
-        try:
-            x, y = transform(self.destProj, self.srcProj, sphere[0], sphere[1])
-            x, y = self.t0_inv * (x, y)
-
-            if not self.window_contains_point((x, y)) or self.last_range_image is None:
-                s = self.last_range_window_size
-                self.last_range_window = ((x - s[0], y - s[0]), (x + s[0], y + s[1]))
-                self.last_range_image = self.infile.read(1, window=self.last_range_window)
-
-            w = self.last_range_window[0]
-            pos = (x - w[0], y - w[1])
-            v = self.last_range_image[pos]
-            return v * self.moon_radius_scale + self.moon_radius
-        except:
-            print "Error ", sphere
-            pass
+        # try:
+        #     x, y = transform(self.destProj, self.srcProj, sphere[0], sphere[1])
+        #     x, y = self.t0_inv * (x, y)
+        #
+        #     if not self.window_contains_point((x, y)) or self.last_range_image is None:
+        #         s = self.last_range_window_size
+        #         self.last_range_window = ((x - s[0], y - s[0]), (x + s[0], y + s[1]))
+        #         self.last_range_image = self.infile.read(1, window=self.last_range_window)
+        #
+        #     w = self.last_range_window[0]
+        #     pos = (x - w[0], y - w[1])
+        #     v = self.last_range_image[pos]
+        #     return v * self.moon_radius_scale + self.moon_radius
+        # except:
+        #     print "Error ", sphere
+        #     pass
         return self.moon_radius
 
     def convert(self):

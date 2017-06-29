@@ -90,11 +90,11 @@ def main():
                     till_point = advance_til(projSrc, projDest, (src_x, src_y), (-1, step_size), T0)
 
                     # till_point[1] + 1, because x is not advanced (see -1 above) and read will return all height
-                    area = src.read(1, window=((src_y, till_point[1] + 1), (src_x, till_point[0])))
+                    area = src.read(1, window=((src_y, till_point[1] + 1), (src_x, till_point[0] + 1)))
 
                     if area.size > 0:
                         m = area.mean()
-                        h5_dataset[h5_x, h5_y] = [longitude, latitude, m]
+                        h5_dataset[h5_x, h5_y] = [longitude_i, latitude_i, m]
                         # print longitude, latitude, m, (src_x, src_y), till_point
                     else:
                         print longitude, latitude, "miss", (src_x, src_y), till_point
