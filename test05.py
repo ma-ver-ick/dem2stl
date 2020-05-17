@@ -8,7 +8,7 @@ import random
 # from rasterio.warp import reproject
 
 from affine import Affine
-from pyproj import Proj, transform
+from pyproj import Proj, transform, Transformer, CRS
 
 # Used to print an example and kept for historic reasons.
 
@@ -37,10 +37,11 @@ GEOTIFF = 'lunar_large.tiff'
 to_rad = lambda t: t/180.0 * math.pi
 
 
-class test04:
+
+class test05:
     infile = None
     outfile = None
-    step_size = (10, 10)  # longitude, latitude
+    step_size = (100, 100)  # longitude, latitude
     srcProj = None
     destProj = None
     last_range_window = None
@@ -50,7 +51,7 @@ class test04:
     t0_inv = None
     moon_radius = 150      # mm
     moon_radius_scale = 4.0  # half the values from the input file
-    inner_moon_radius = 145
+    inner_moon_radius = 148
     min_radius = 100000000
     max_radius = -100000000
 
@@ -60,9 +61,11 @@ class test04:
 
         if self.infile:
             self.srcProj = Proj(self.infile.crs)
-            self.t0 = self.infile.affine
+            # self.infile.affine
+            self.t0 = self.infile.transform
             self.t0_inv = ~self.t0
-            self.destProj = Proj(proj='latlong', datum='WGS84')
+            # self.destProj = Proj(proj='latlong', datum='WGS84')
+            self.transformer = Transformer.from_crs(self.infile.crs, CRS(self.infile.crs).geodetic_crs)
 
     def sphere2cart(self, sphere, radius):
         lo_rad, la_rad = sphere
@@ -75,11 +78,13 @@ class test04:
     def transform_to_latlong(self, point):
         p = (point[0], point[1]) * self.t0
 
-        lo, la = transform(self.srcProj, self.destProj, p[1], p[0])
+        # lo, la = transform(self.srcProj, self.destProj, p[1], p[0])
+        lo, la = self.transformer.transform(point[0], point[1])
+
         la_rad = to_rad(la)
         lo_rad = to_rad(lo)
 
-        return la_rad, lo_rad
+        return la, lo #la_rad, lo_rad
 
     def radius_for(self, height):
         range = 17787.0 + 21281.0
@@ -90,6 +95,8 @@ class test04:
         return ret
 
     def write_sphere_corners(self, top_point, top_height, bottom_point, bottom_height):
+        return
+
         outer_top_point = self.sphere2cart(top_point, self.radius_for(top_height))
         inner_top_point = self.sphere2cart(top_point, self.inner_moon_radius)
         outer_bottom_point = self.sphere2cart(bottom_point, self.radius_for(bottom_height))
@@ -116,19 +123,21 @@ class test04:
         length_vector = lambda v: math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
         diff_vector = lambda v0, v1: (v0[0] - v1[0], v0[1] - v1[1], v0[2] - v1[2])
 
-        step = 1
+        step = 100
         min_length_x = 10000000
         max_length_x = -min_length_x
         min_length_y = min_length_x
         max_length_y = -min_length_y
 
         min_x_degree = to_rad(-180)
-        max_x_degree = to_rad(-110)
-        min_y_degree = to_rad(-90)
-        max_y_degree = to_rad(50)
+        max_x_degree = to_rad(0)
+        min_y_degree = to_rad(-90)  ## ?? used
+        max_y_degree = to_rad(-90)
 
         for x in range(0, self.infile.width, step):
             print("x ", x, "/", self.infile.width)
+
+            min_temp = 100000000
 
             for y in range(0, self.infile.height, step):
                 top_left      = (x       , y)
@@ -148,19 +157,19 @@ class test04:
                 outer_bottom_right_r = height_for(bottom_right)
                 bottom_right = self.transform_to_latlong(bottom_right)
 
-                if top_left[0] >= max_x_degree:
-                    break
-
-                if bottom_left[1] <= max_y_degree:
-                    self.write_sphere_corners(top_left, outer_top_left_r, top_right, outer_top_right_r)
-                    break
-
-                if x == 0:
-                    self.write_sphere_corners(top_left, outer_top_left_r, bottom_left, outer_bottom_left_r)
-
-                # if x == 0:  # and x > 0:  # top_left[1] >= min_y_degree:
-                if self.transform_to_latlong((x + step, y))[0] >= max_x_degree:
-                    self.write_sphere_corners(top_right, outer_top_right_r, bottom_right, outer_bottom_right_r)
+                # if top_left[0] >= max_x_degree:
+                #     break
+                #
+                # if bottom_left[1] <= max_y_degree:
+                #     self.write_sphere_corners(top_left, outer_top_left_r, top_right, outer_top_right_r)
+                #     break
+                #
+                # if x == 0:
+                #     self.write_sphere_corners(top_left, outer_top_left_r, bottom_left, outer_bottom_left_r)
+                #
+                # # if x == 0:  # and x > 0:  # top_left[1] >= min_y_degree:
+                # if self.transform_to_latlong((x + step, y))[0] >= max_x_degree:
+                #     self.write_sphere_corners(top_right, outer_top_right_r, bottom_right, outer_bottom_right_r)
 
                 outer_top_left = self.sphere2cart(top_left, self.radius_for(outer_top_left_r))
                 outer_top_right = self.sphere2cart(top_right, self.radius_for(outer_top_right_r))
@@ -182,14 +191,19 @@ class test04:
                 # +---------+
 
                 # length x
-                length = length_vector(diff_vector(outer_top_left, outer_top_right))
-                min_length_x = min(min_length_x, length)
-                max_length_x = max(max_length_x, length)
+                length_x = length_vector(diff_vector(outer_top_left, outer_top_right))
+                min_length_x = min(min_length_x, length_x)
+                max_length_x = max(max_length_x, length_x)
 
                 # length y
-                length = length_vector(diff_vector(outer_top_right, outer_bottom_right))
-                min_length_y = min(min_length_x, length)
-                max_length_y = max(max_length_x, length)
+                length_y = length_vector(diff_vector(outer_top_right, outer_bottom_right))
+                min_length_y = min(min_length_x, length_y)
+                max_length_y = max(max_length_x, length_y)
+
+                #if min(self.radius_for(outer_top_left_r), self.radius_for(outer_top_right_r), self.radius_for(outer_bottom_left_r), self.radius_for(outer_bottom_right_r)) >= 149:
+                #    continue
+
+                min_temp = min(min_temp, outer_top_left_r, outer_top_right_r, outer_bottom_left_r, outer_bottom_right_r)
 
                 # cw
                 # v1 = [top_left, top_right, bottom_left]
@@ -207,6 +221,7 @@ class test04:
                 stl.write_3_faces(self.outfile, iv2)
 
         stl.write_solid_end(self.outfile)
+        print(min_temp)
 
         print("min/max vertex length, x: ", min_length_x, max_length_x, " y:", min_length_y, max_length_y)
         print("min/max radius ", self.min_radius, self.max_radius, self.max_radius - self.min_radius)
@@ -217,7 +232,7 @@ if __name__ == '__main__':
 
     with rasterio.open(GEOTIFF) as src:
         with open("test.stl", "w+") as dest:
-            test04(src, dest).convert()
+            test05(src, dest).convert()
 
     end = time.time()
     print("Took: %g" % (end - start))

@@ -8,11 +8,11 @@ def tuple_3_diff(a, b):
 
 
 def write_solid_end(f, name="test"):
-    f.write(("endsolid %s\n" % name).encode())
+    f.write("endsolid %s\n" % name)
 
 
 def write_solid_start(f, name="test"):
-    f.write(("solid %s\n" % name).encode())
+    f.write("solid %s\n" % name)
 
 
 def write_3_faces(f, vertices):
@@ -29,9 +29,9 @@ def write_3_faces(f, vertices):
     normal_length = math.sqrt(normal_length)
     normal = (normal[0] / normal_length, normal[1] / normal_length, normal[2] / normal_length)
 
-    f.write(("  facet normal %g %g %g\n" % normal).encode())
-    f.write(b"    outer loop\n")
+    f.write("  facet normal %g %g %g\n" % normal)
+    f.write("    outer loop\n")
     for vertex in vertices:
-        f.write(("      vertex %g %g %g\n" % vertex).encode())
-    f.write(b"    endloop\n")
-    f.write(b"  endfacet\n")
+        f.write("      vertex %g %g %g\n" % vertex)
+    f.write("    endloop\n")
+    f.write("  endfacet\n")
